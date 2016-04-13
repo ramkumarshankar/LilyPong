@@ -170,9 +170,34 @@ void keyPressed() {
     bGameOver = false;
     resetGame();
   }
+  
+  //Keyboard controls for development, change to lilypad input later on
+  //Player 0
   if (key == 'z' || key == 'Z') {
+    players[0].setStep(0);
+  }
+  if (key == 'x' || key == 'X') {
+    players[0].setStep(1);
+  }
+  if (key == 'c' || key == 'C') {
+    players[0].setStep(2);
+  }
+  if (key == 'v' || key == 'V') {
     players[0].setStep(3);
-    //resetGame();
+  }
+  
+  //Player 0
+  if (key == 'h' || key == 'H') {
+    players[1].setStep(0);
+  }
+  if (key == 'j' || key == 'J') {
+    players[1].setStep(1);
+  }
+  if (key == 'k' || key == 'K') {
+    players[1].setStep(2);
+  }
+  if (key == 'l' || key == 'L') {
+    players[1].setStep(3);
   }
 }
 
@@ -286,7 +311,7 @@ class Player {
   
   void update() {
     float dy = newYPos - yPos;
-    if (dy < 1) {
+    if (abs(dy) < 1) {
       yPos = newYPos;
     }
     yPos += easing * dy;
