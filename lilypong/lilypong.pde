@@ -20,6 +20,7 @@ Player[] players = new Player[2];
 
 //Variables for the game
 boolean bGameStarted = false;
+boolean bGameOver = false;
 int radius = 25; //radius of the ball
 int movementStep = 117; //distance moved by paddle in each step
 
@@ -48,10 +49,14 @@ void setup() {
 void draw() {
   imageMode(CORNER);
   image(imgBackground, 0, 0);
-  if (!bGameStarted) {
+  if (!bGameStarted && !bGameOver) {
     drawTitleScreen(); //<>//
   }
+  else if (bGameOver) {
+    drawGameOverScreen();
+  }
   else {
+    updateGame();
     drawGameScreen();
   }
 }
@@ -66,17 +71,58 @@ void drawTitleScreen () {
   text("Jump to Start!", 278, 328);
 }
 
+void drawGameOverScreen () {
+  textFont(titleFont);
+  fill(titleColor);
+  text("Well Done!", 30, 253);
+  textFont(subtitleFont);
+  fill(subtitleColor);
+  text("Jump to play again!", 278, 328);
+}
+
+void updateGame() {
+  //Update player positions
+  players[0].update();
+  players[1].update();
+  
+  //Update scores
+  updateScore();
+  
+  //Check if ball hits the paddles
+  checkPlayerCollision();
+  
+  //Update the ball position
+  ball.update();
+  
+  //Check for gameover condition
+  for (int i = 0; i < players.length; i++) {
+    if (players[i].checkGameOver()) {
+      bGameOver = true;
+      bGameStarted = false;
+      resetGame();
+      break;
+    }
+  }
+  
+}
+
 void drawGameScreen() {
   stroke(255);
   noFill();
   line(width/2, 0, width/2, height);
   ellipse(width/2, height/2, 100, 100);
   drawPlayers();
-  //image(imgPaddle, -20, 100);
-  //image(imgPaddle, width-45, 300);
   drawScore(); //<>//
-  checkPlayerCollision();
-  drawBall();
+  
+  //Draw the ball
+  ball.draw();
+  
+  //Show a message before starting next round
+  if (ball.isStationary()) {
+    textFont(subtitleFont);
+    fill(subtitleColor);
+    text("Jump when ready!", 278, 328);
+  }
 }
 
 void startGame() {
@@ -84,24 +130,17 @@ void startGame() {
 }
 
 void drawPlayers() {
-  players[0].update();
-  players[1].update();
-  imageMode(CORNER);
   players[0].draw();
   players[1].draw();
 }
 
-void drawBall() {
-  ball.update();
-  ball.draw();
-}
-
 void resetGame() {
   ball.reset();
+  players[0].resetPlayer();
+  players[1].resetPlayer();
 }
 
 void drawScore() {
-  updateScore();
   textFont(titleFont);
   fill(scoreColor);
   text(players[0].score, 142, 120);
@@ -123,10 +162,12 @@ void updateScore() {
 void keyPressed() {
   if (key == 's' || key == 'S') {
     bGameStarted = true;
+    bGameOver = false;
     startGame();
   }
   if (key == 'q' || key == 'Q') {
     bGameStarted = false;
+    bGameOver = false;
     resetGame();
   }
   if (key == 'z' || key == 'Z') {
@@ -167,8 +208,18 @@ class Ball {
   void initialise() {
     position.x = width/2;
     position.y = height/2;
-    velocity.x = -2;
-    velocity.y = -2;
+    if (random(0,1) > 0.5) {
+      velocity.x = 4;
+    }
+    else {
+      velocity.x = -4;
+    }
+    if (random(0,1) > 0.5) {
+      velocity.y = int (random(1,4));
+    }
+    else {
+      velocity.y = int (random(-4,-1));
+    }
   }
   
   void update() {
@@ -185,10 +236,10 @@ class Ball {
   }
   
   void checkOutofBounds() {
-    if (position.x < 0) {
+    if (position.x < radius) {
       result = 0;
     }
-    else if (position.x > width) {
+    else if (position.x > width+radius) {
       result = 1;
     }
   }
@@ -198,6 +249,13 @@ class Ball {
     velocity.x = 0;
     velocity.y = 0;
     result = -1;
+  }
+  
+  boolean isStationary() {
+    if ((velocity.x == 0) && (velocity.y == 0)) {
+      return true;
+    }
+    return false;
   }
 }
 
@@ -232,6 +290,17 @@ class Player {
       yPos = newYPos;
     }
     yPos += easing * dy;
+  }
+  
+  boolean checkGameOver() {
+    if (score == 7) {
+      return true;
+    }
+    return false;
+  }
+  
+  void resetPlayer() {
+    score = 0;
   }
   
   void draw() {
