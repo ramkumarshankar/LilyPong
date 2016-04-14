@@ -89,6 +89,13 @@ void setup() {
   
   //Calibrate the sensors
   calibrate();
+  
+  //Setup pin modes
+  arduino.pinMode(redPin, Arduino.OUTPUT);
+  arduino.pinMode(greenPin, Arduino.OUTPUT);
+  arduino.pinMode(bluePin, Arduino.OUTPUT);  
+  
+  initialiseLightPattern();
 }
 
 void draw() {
@@ -236,9 +243,11 @@ void updateScore() {
   if (ball.result >= 0) {
     if (ball.result == 0) {
       players[1].score++;
+      player2Goal();
     }
     else if (ball.result == 1) {
       players[0].score++;
+      player1Goal();
     }
     ball.reset();
   }
@@ -314,6 +323,52 @@ void calibrate() {
   player2LeftAvg -= 100;
   player2RightAvg /= 100;
   player2RightAvg -= 100;
+}
+
+void initialiseLightPattern() {
+  lightRGB(0, 255, 0);
+  delay(200);
+  lightRGB(0, 0, 0);
+  delay(200);
+  lightRGB(0, 255, 0);
+  delay(200);
+  lightRGB(0, 0, 0);
+  delay(200);
+  lightRGB(0, 255, 0);
+}
+
+void player1Goal() {
+  lightRGB(252, 57, 144);
+  delay(200);
+  lightRGB(0, 0, 0);
+  delay(200);
+  lightRGB(252, 57, 144);
+  delay(200);
+  lightRGB(0, 0, 0);
+  delay(200);
+  lightRGB(252, 57, 144);
+  delay(500);
+  lightRGB(0, 255, 0);
+}
+
+void player2Goal() {
+  lightRGB(57, 142, 252);
+  delay(200);
+  lightRGB(0, 0, 0);
+  delay(200);
+  lightRGB(57, 142, 252);
+  delay(200);
+  lightRGB(0, 0, 0);
+  delay(200);
+  lightRGB(57, 142, 252);
+  delay(500);
+  lightRGB(0, 255, 0);
+}
+
+void lightRGB(int red, int green, int blue) {
+  arduino.analogWrite(redPin, 255-red);
+  arduino.analogWrite(greenPin, 255-green);
+  arduino.analogWrite(bluePin, 255-blue);
 }
 
 class Ball { 
