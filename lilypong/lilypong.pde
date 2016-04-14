@@ -1,5 +1,6 @@
 import cc.arduino.*; //<>//
 import org.firmata.*;
+import processing.serial.*;
 
 //Initialise our lilypad
 Arduino arduino;
@@ -11,6 +12,7 @@ int player1LeftPin = 0;
 int player1RightPin = 1;
 int player2LeftPin = 2;
 int player2RightPin = 3;
+int piezoPin = 13;
 
 int redPin = 9;
 int greenPin = 10;
@@ -21,9 +23,18 @@ boolean lilypadButton;
 
 //Player controls
 int player1Left;
+int player1LeftAvg;
 int player1Right;
+int player1RightAvg;
 int player2Left;
+int player2LeftAvg;
 int player2Right;
+int player2RightAvg;
+
+//Flags to detect change in controls
+boolean bAllowPlayer1 = true;
+boolean bAllowPlayer2 = true;
+
 
 //Our images
 PImage imgBackground;
@@ -56,6 +67,10 @@ void setup() {
   //Commented for now, slows down the sketch on this laptop
   //pixelDensity(2);
   
+  //Initialise our Arduino
+  arduino = new Arduino(this, Arduino.list()[32], 57600);
+  delay(500);
+  
   //Setup the size
   size(750, 468);
   
@@ -71,6 +86,9 @@ void setup() {
   //Create our players
   players[0] = new Player(-20, 1);
   players[1] = new Player(width-45, 0);
+  
+  //Calibrate the sensors
+  calibrate();
 }
 
 void draw() {
@@ -83,6 +101,7 @@ void draw() {
     drawGameOverScreen();
   }
   else {
+    readFromArduino();
     updateGame();
     drawGameScreen();
   }
@@ -105,6 +124,45 @@ void drawGameOverScreen () {
   textFont(subtitleFont);
   fill(subtitleColor);
   text("Jump to play again!", 278, 328);
+}
+
+void readFromArduino() {
+  player1Left = arduino.analogRead(player1LeftPin);
+  player1Right = arduino.analogRead(player1RightPin);
+  player2Left = arduino.analogRead(player2LeftPin);
+  player2Right = arduino.analogRead(player2RightPin);
+  
+  if (player1Left <= player1LeftAvg) {
+    if (bAllowPlayer1) {
+      players[0].setStep(-1);
+      bAllowPlayer1 = false;
+    }
+    return;
+  }
+  if (player1Right <= player1RightAvg) {
+    if (bAllowPlayer1) {
+      players[0].setStep(1);
+      bAllowPlayer1 = false;
+    }
+    return;
+  }
+  if (player2Left <= player2LeftAvg) {
+    if (bAllowPlayer2) {
+      players[1].setStep(-1);
+      bAllowPlayer2 = false;
+    }
+    return;
+  }
+  if (player2Left <= player2RightAvg) {
+    if (bAllowPlayer2) {
+      players[1].setStep(-1);
+      bAllowPlayer2 = false;
+    }
+    return;
+  }
+  
+  bAllowPlayer1 = true;
+  bAllowPlayer2 = true;
 }
 
 void updateGame() {
@@ -234,6 +292,28 @@ void checkPlayerCollision() {
     }
   }
   
+}
+
+void calibrate() {
+  //Get some initial readings and average it out to know when flex sensor is pressed
+  player1LeftAvg = 0;
+  player1RightAvg = 0;
+  player2LeftAvg = 0;
+  player2RightAvg = 0;
+  for (int i = 0; i < 100; i++) {
+    player1LeftAvg += arduino.analogRead(player1LeftPin);
+    player1RightAvg += arduino.analogRead(player1RightPin);
+    player2LeftAvg += arduino.analogRead(player2LeftPin);
+    player2RightAvg += arduino.analogRead(player2RightPin);
+  }
+  player1LeftAvg /= 100;
+  player1LeftAvg -= 100;
+  player1RightAvg /= 100;
+  player1RightAvg -= 100;
+  player2LeftAvg /= 100;
+  player2LeftAvg -= 100;
+  player2RightAvg /= 100;
+  player2RightAvg -= 100;
 }
 
 class Ball { 
