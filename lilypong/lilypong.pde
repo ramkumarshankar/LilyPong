@@ -1,9 +1,15 @@
-import cc.arduino.*; //<>//
+import cc.arduino.*;
 import org.firmata.*;
 import processing.serial.*;
 
 //Initialise our lilypad
 Arduino arduino;
+
+//Or use a serial port instead
+//Serial arduinoPort;
+
+//String from Lilypad
+String controlString;
 
 //Readings from the lilypad
 //Pin values
@@ -68,8 +74,13 @@ void setup() {
   //pixelDensity(2);
   
   //Initialise our Arduino
-  arduino = new Arduino(this, Arduino.list()[32], 57600);
+  //There are problems with Firmata running at baud 115200 on the Lilypad
+  //It works on the Redboard, but not the Lilypad.
+  arduino = new Arduino(this, Arduino.list()[4], 115200);
   delay(500);
+  
+  //Because of Firmata issue, code to use serial communication instead
+  //arduinoPort = new Serial(this, Serial.list()[5], 115200);
   
   //Setup the size
   size(750, 468);
@@ -84,16 +95,16 @@ void setup() {
   subtitleFont = createFont("../assets/Sansita-Regular.otf", 32);
   
   //Create our players
-  players[0] = new Player(-20, 1);
+  players[0] = new Player(-20, 2);
   players[1] = new Player(width-45, 0);
   
   //Calibrate the sensors
   calibrate();
   
   //Setup pin modes
-  arduino.pinMode(redPin, Arduino.OUTPUT);
+  /*arduino.pinMode(redPin, Arduino.OUTPUT);
   arduino.pinMode(greenPin, Arduino.OUTPUT);
-  arduino.pinMode(bluePin, Arduino.OUTPUT);  
+  arduino.pinMode(bluePin, Arduino.OUTPUT);*/  
   
   initialiseLightPattern();
 }
@@ -133,6 +144,8 @@ void drawGameOverScreen () {
   text("Jump to play again!", 278, 328);
 }
 
+
+//Use this with Firmata
 void readFromArduino() {
   player1Left = arduino.analogRead(player1LeftPin);
   player1Right = arduino.analogRead(player1RightPin);
@@ -170,7 +183,7 @@ void readFromArduino() {
   
   bAllowPlayer1 = true;
   bAllowPlayer2 = true;
-}
+} 
 
 void updateGame() {
   //Update player positions
@@ -185,16 +198,6 @@ void updateGame() {
   
   //Update the ball position
   ball.update();
-  
-  //Check for gameover condition
-  for (int i = 0; i < players.length; i++) {
-    if (players[i].checkGameOver()) {
-      bGameOver = true;
-      bGameStarted = false;
-      resetGame();
-      break;
-    }
-  }
   
 }
 
@@ -213,7 +216,7 @@ void drawGameScreen() {
   if (ball.isStationary()) {
     textFont(subtitleFont);
     fill(subtitleColor);
-    text("Jump when ready!", 278, 328);
+    text("Get Ready!", 298, 328);
   }
 }
 
@@ -240,16 +243,33 @@ void drawScore() {
 }
 
 void updateScore() {
+  int winValue = -1;
   if (ball.result >= 0) {
     if (ball.result == 0) {
       players[1].score++;
+      winValue = 1;
       player2Goal();
     }
     else if (ball.result == 1) {
       players[0].score++;
+      winValue = 0;
       player1Goal();
     }
     ball.reset();
+  }
+  
+  //Check for gameover condition
+  for (int i = 0; i < players.length; i++) {
+    if (players[i].checkGameOver()) {
+      bGameOver = true;
+      bGameStarted = false;
+      resetGame();
+      winValue = 2;
+      break;
+    }
+  }
+  if (winValue != 2) {
+    //arduinoPort.write(winValue);
   }
 }
 
@@ -302,7 +322,7 @@ void checkPlayerCollision() {
   }
   
 }
-
+ 
 void calibrate() {
   //Get some initial readings and average it out to know when flex sensor is pressed
   player1LeftAvg = 0;
@@ -365,6 +385,40 @@ void player2Goal() {
   lightRGB(0, 255, 0);
 }
 
+/* Use these functions if using serial communication */
+//void serialEvent(Serial arduinoPort) {
+//  String inputString = arduinoPort.readStringUntil('\n');
+//  if (inputString != null) {
+//    trim(inputString);
+//    controlString = inputString.substring(0,2);
+//    handleControlString();
+//  }
+//}
+
+//void handleControlString() {
+//  if (bGameStarted) {
+//    if (controlString.equals("1l")) {
+//    players[0].setStep(-1);
+//    }
+//    if (controlString.equals("1r")) {
+//      players[0].setStep(1);
+//    }
+//    if (controlString.equals("2l")) {
+//      players[1].setStep(-1);
+//    }
+//    if (controlString.equals("2r")) {
+//      players[1].setStep(1);
+//    }
+//  }
+//  if (controlString.equals("00")) {
+//    bGameStarted = true;
+//    bGameOver = false;
+//    startGame();
+//  }
+//}
+
+
+//Control LED if using Firmata
 void lightRGB(int red, int green, int blue) {
   arduino.analogWrite(redPin, 255-red);
   arduino.analogWrite(greenPin, 255-green);
@@ -414,7 +468,7 @@ class Ball {
   }
   
   void checkOutofBounds() {
-    if (position.x < radius) {
+    if (position.x < 0-radius) {
       result = 0;
     }
     else if (position.x > width+radius) {
