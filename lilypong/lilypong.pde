@@ -1,3 +1,30 @@
+import cc.arduino.*; //<>//
+import org.firmata.*;
+
+//Initialise our lilypad
+Arduino arduino;
+
+//Readings from the lilypad
+//Pin values
+int buttonPin = 7;
+int player1LeftPin = 0;
+int player1RightPin = 1;
+int player2LeftPin = 2;
+int player2RightPin = 3;
+
+int redPin = 9;
+int greenPin = 10;
+int bluePin = 11;
+
+//Button
+boolean lilypadButton;
+
+//Player controls
+int player1Left;
+int player1Right;
+int player2Left;
+int player2Right;
+
 //Our images
 PImage imgBackground;
 PImage imgBall;
@@ -50,7 +77,7 @@ void draw() {
   imageMode(CORNER);
   image(imgBackground, 0, 0);
   if (!bGameStarted && !bGameOver) {
-    drawTitleScreen(); //<>//
+    drawTitleScreen();
   }
   else if (bGameOver) {
     drawGameOverScreen();
@@ -112,7 +139,7 @@ void drawGameScreen() {
   line(width/2, 0, width/2, height);
   ellipse(width/2, height/2, 100, 100);
   drawPlayers();
-  drawScore(); //<>//
+  drawScore();
   
   //Draw the ball
   ball.draw();
@@ -173,31 +200,22 @@ void keyPressed() {
   
   //Keyboard controls for development, change to lilypad input later on
   //Player 0
+  //Move left
   if (key == 'z' || key == 'Z') {
-    players[0].setStep(0);
+    players[0].setStep(-1);
   }
+  //Move right
   if (key == 'x' || key == 'X') {
     players[0].setStep(1);
   }
-  if (key == 'c' || key == 'C') {
-    players[0].setStep(2);
-  }
-  if (key == 'v' || key == 'V') {
-    players[0].setStep(3);
-  }
-  
   //Player 0
+  //Move left
   if (key == 'h' || key == 'H') {
-    players[1].setStep(0);
+    players[1].setStep(-1);
   }
+  //Move right
   if (key == 'j' || key == 'J') {
     players[1].setStep(1);
-  }
-  if (key == 'k' || key == 'K') {
-    players[1].setStep(2);
-  }
-  if (key == 'l' || key == 'L') {
-    players[1].setStep(3);
   }
 }
 
@@ -225,7 +243,7 @@ class Ball {
   int result;
   
   Ball () {  
-    position = new PVector(width/2, height/2);  //<>//
+    position = new PVector(width/2, height/2); 
     velocity = new PVector(0, 0);
     result = -1;
   }
@@ -250,14 +268,14 @@ class Ball {
   void update() {
     position.add(velocity);
     if ((position.y > height-radius) || (position.y < radius)) {
-      velocity.y = velocity.y * -1; //<>//
+      velocity.y = velocity.y * -1;
     }
     checkOutofBounds();
   }
   
   void draw() {
     imageMode(CENTER);
-    image(imgBall, position.x, position.y); //<>//
+    image(imgBall, position.x, position.y);
   }
   
   void checkOutofBounds() {
@@ -301,7 +319,18 @@ class Player {
   }
   
   void setStep(int _step) {
-    currentStep = _step;
+    if (_step < 0) {
+      currentStep--;
+    }
+    else {
+      currentStep++;
+    }
+    if (currentStep < 0) {
+      currentStep = 0;
+    }
+    else if (currentStep > 3) {
+      currentStep = 3;
+    }
     updateTargetPosition();
   }
   
