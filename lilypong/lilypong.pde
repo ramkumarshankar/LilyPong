@@ -10,7 +10,7 @@ String controlString;
 
 //Readings from the lilypad
 //Pin values
-int buttonPin = 7;
+int buttonPin = 5;
 int player1LeftPin = 0;
 int player1RightPin = 1;
 int player2LeftPin = 2;
@@ -97,7 +97,9 @@ void setup() {
   //Setup pin modes
   arduino.pinMode(redPin, Arduino.OUTPUT);
   arduino.pinMode(greenPin, Arduino.OUTPUT);
-  arduino.pinMode(bluePin, Arduino.OUTPUT);  
+  arduino.pinMode(bluePin, Arduino.OUTPUT);
+  
+  arduino.pinMode(buttonPin, Arduino.INPUT); 
   
   initialiseLightPattern();
 }
@@ -105,6 +107,7 @@ void setup() {
 void draw() {
   imageMode(CORNER);
   image(imgBackground, 0, 0);
+  readFromArduino();
   if (!bGameStarted && !bGameOver) {
     drawTitleScreen();
   }
@@ -116,6 +119,7 @@ void draw() {
     updateGame();
     drawGameScreen();
   }
+
 }
 
 void drawTitleScreen () {
@@ -125,13 +129,14 @@ void drawTitleScreen () {
   text("LILYPONG", 100, 253);
   textFont(subtitleFont);
   fill(subtitleColor);
-  text("Jump to Start!", 278, 328);
+  text("First to 7 points wins!", 238, 328);
+  text("Jump to Start!", 278, 368);
 }
 
 void drawGameOverScreen () {
   textFont(titleFont);
   fill(titleColor);
-  text("Well Done!", 30, 253);
+  text("Good Game!", 30, 253);
   textFont(subtitleFont);
   fill(subtitleColor);
   text("Jump to play again!", 278, 328);
@@ -145,12 +150,32 @@ void readFromArduino() {
   player2Left = arduino.analogRead(player2LeftPin);
   player2Right = arduino.analogRead(player2RightPin);
   
-  checkPlayer1();
-  checkPlayer2();
+  if ((player1Left < player1LeftAvg) || 
+        (player1Right < player1RightAvg) ||
+        (player2Left < player2LeftAvg) ||
+        (player2Right < player2RightAvg)) {
+     if (!bGameStarted) {
+       startGame();
+       bAllowPlayer1 = false;
+       bAllowPlayer2 = false;
+       return;
+     }
+     else if (ball.isStationary()) {
+       ball.initialise();
+       bAllowPlayer1 = false;
+       bAllowPlayer2 = false;
+       return;
+     }
+     else {
+       checkPlayer1Input();
+       checkPlayer2Input();
+     }
+     
+  }
   
 }
 
-void checkPlayer1() {
+void checkPlayer1Input() {
   
   if (player1Left <= player1LeftAvg) {
     if (bAllowPlayer1) {
@@ -169,13 +194,13 @@ void checkPlayer1() {
   bAllowPlayer1 = true;
 }
 
-void checkPlayer2() {
+void checkPlayer2Input() {
   
   if (player2Left <= player2LeftAvg) {
     if (bAllowPlayer2) {
       players[1].setStep(-1);
       bAllowPlayer2 = false;
-    } //<>//
+    }
     return;
   }
   if (player2Left <= player2RightAvg) {
@@ -219,11 +244,14 @@ void drawGameScreen() {
   if (ball.isStationary()) {
     textFont(subtitleFont);
     fill(subtitleColor);
-    text("Get Ready!", 298, 328);
+    text("Get Ready", 305, 328);
+    text("Jump to start!", 288, 368);
   }
 }
 
 void startGame() {
+  bGameStarted = true;
+  bGameOver = false;
   ball.initialise();
 }
 
@@ -270,8 +298,6 @@ void updateScore() {
 
 void keyPressed() {
   if (key == 's' || key == 'S') {
-    bGameStarted = true;
-    bGameOver = false;
     startGame();
   }
   if (key == 'q' || key == 'Q') {
@@ -340,6 +366,29 @@ void calibrate() {
   player2RightAvg /= 10;
   player2RightAvg -= 100;
 }
+
+void readButton() {
+  lilypadButton = true;
+  for (int i = 0; i < 10; i++) {
+    if (arduino.digitalRead(buttonPin) == Arduino.LOW) {
+      //delay(10);
+      continue;
+    }
+    else {
+      lilypadButton = false;
+      break;
+    }
+  }
+  if (lilypadButton) {
+    println("pressed");
+  }
+  
+  
+  //if (arduino.digitalRead(buttonPin) == Arduino.LOW) {
+  //  println("pressed!");
+  //}
+}
+
 
 void initialiseLightPattern() {
   lightRGB(0, 255, 0);
