@@ -5,9 +5,6 @@ import processing.serial.*;
 //Initialise our lilypad
 Arduino arduino;
 
-//Or use a serial port instead
-//Serial arduinoPort;
-
 //String from Lilypad
 String controlString;
 
@@ -40,7 +37,6 @@ int player2RightAvg;
 //Flags to detect change in controls
 boolean bAllowPlayer1 = true;
 boolean bAllowPlayer2 = true;
-
 
 //Our images
 PImage imgBackground;
@@ -75,12 +71,9 @@ void setup() {
   
   //Initialise our Arduino
   //There are problems with Firmata running at baud 115200 on the Lilypad
-  //It works on the Redboard, but not the Lilypad.
-  arduino = new Arduino(this, Arduino.list()[4], 115200);
+  //We've changed the bluetooth module to use 57600 instead! (Thanks Susana!)
+  arduino = new Arduino(this, Arduino.list()[2], 57600);
   delay(500);
-  
-  //Because of Firmata issue, code to use serial communication instead
-  //arduinoPort = new Serial(this, Serial.list()[5], 115200);
   
   //Setup the size
   size(750, 468);
@@ -102,9 +95,9 @@ void setup() {
   calibrate();
   
   //Setup pin modes
-  /*arduino.pinMode(redPin, Arduino.OUTPUT);
+  arduino.pinMode(redPin, Arduino.OUTPUT);
   arduino.pinMode(greenPin, Arduino.OUTPUT);
-  arduino.pinMode(bluePin, Arduino.OUTPUT);*/  
+  arduino.pinMode(bluePin, Arduino.OUTPUT);  
   
   initialiseLightPattern();
 }
@@ -152,6 +145,13 @@ void readFromArduino() {
   player2Left = arduino.analogRead(player2LeftPin);
   player2Right = arduino.analogRead(player2RightPin);
   
+  checkPlayer1();
+  checkPlayer2();
+  
+}
+
+void checkPlayer1() {
+  
   if (player1Left <= player1LeftAvg) {
     if (bAllowPlayer1) {
       players[0].setStep(-1);
@@ -166,11 +166,16 @@ void readFromArduino() {
     }
     return;
   }
+  bAllowPlayer1 = true;
+}
+
+void checkPlayer2() {
+  
   if (player2Left <= player2LeftAvg) {
     if (bAllowPlayer2) {
       players[1].setStep(-1);
       bAllowPlayer2 = false;
-    }
+    } //<>//
     return;
   }
   if (player2Left <= player2RightAvg) {
@@ -180,10 +185,8 @@ void readFromArduino() {
     }
     return;
   }
-  
-  bAllowPlayer1 = true;
   bAllowPlayer2 = true;
-} 
+}
 
 void updateGame() {
   //Update player positions
@@ -243,16 +246,13 @@ void drawScore() {
 }
 
 void updateScore() {
-  int winValue = -1;
   if (ball.result >= 0) {
     if (ball.result == 0) {
       players[1].score++;
-      winValue = 1;
       player2Goal();
     }
     else if (ball.result == 1) {
       players[0].score++;
-      winValue = 0;
       player1Goal();
     }
     ball.reset();
@@ -264,12 +264,7 @@ void updateScore() {
       bGameOver = true;
       bGameStarted = false;
       resetGame();
-      winValue = 2;
-      break;
     }
-  }
-  if (winValue != 2) {
-    //arduinoPort.write(winValue);
   }
 }
 
@@ -329,19 +324,20 @@ void calibrate() {
   player1RightAvg = 0;
   player2LeftAvg = 0;
   player2RightAvg = 0;
-  for (int i = 0; i < 100; i++) {
+  for (int i = 0; i < 10; i++) {
     player1LeftAvg += arduino.analogRead(player1LeftPin);
     player1RightAvg += arduino.analogRead(player1RightPin);
     player2LeftAvg += arduino.analogRead(player2LeftPin);
     player2RightAvg += arduino.analogRead(player2RightPin);
+    delay(50);
   }
-  player1LeftAvg /= 100;
+  player1LeftAvg /= 10;
   player1LeftAvg -= 100;
-  player1RightAvg /= 100;
+  player1RightAvg /= 10;
   player1RightAvg -= 100;
-  player2LeftAvg /= 100;
+  player2LeftAvg /= 10;
   player2LeftAvg -= 100;
-  player2RightAvg /= 100;
+  player2RightAvg /= 10;
   player2RightAvg -= 100;
 }
 
@@ -385,40 +381,8 @@ void player2Goal() {
   lightRGB(0, 255, 0);
 }
 
-/* Use these functions if using serial communication */
-//void serialEvent(Serial arduinoPort) {
-//  String inputString = arduinoPort.readStringUntil('\n');
-//  if (inputString != null) {
-//    trim(inputString);
-//    controlString = inputString.substring(0,2);
-//    handleControlString();
-//  }
-//}
-
-//void handleControlString() {
-//  if (bGameStarted) {
-//    if (controlString.equals("1l")) {
-//    players[0].setStep(-1);
-//    }
-//    if (controlString.equals("1r")) {
-//      players[0].setStep(1);
-//    }
-//    if (controlString.equals("2l")) {
-//      players[1].setStep(-1);
-//    }
-//    if (controlString.equals("2r")) {
-//      players[1].setStep(1);
-//    }
-//  }
-//  if (controlString.equals("00")) {
-//    bGameStarted = true;
-//    bGameOver = false;
-//    startGame();
-//  }
-//}
-
-
-//Control LED if using Firmata
+//Function to control LED with Firmata
+//Pass R, G, and B color values
 void lightRGB(int red, int green, int blue) {
   arduino.analogWrite(redPin, 255-red);
   arduino.analogWrite(greenPin, 255-green);
