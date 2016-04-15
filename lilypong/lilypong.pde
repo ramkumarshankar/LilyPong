@@ -10,19 +10,16 @@ String controlString;
 
 //Readings from the lilypad
 //Pin values
-int buttonPin = 5;
+int vibePin = 5;
 int player1LeftPin = 0;
 int player1RightPin = 1;
 int player2LeftPin = 2;
 int player2RightPin = 3;
-int piezoPin = 13;
 
 int redPin = 9;
 int greenPin = 10;
 int bluePin = 11;
 
-//Button
-boolean lilypadButton;
 
 //Player controls
 int player1Left;
@@ -99,7 +96,7 @@ void setup() {
   arduino.pinMode(greenPin, Arduino.OUTPUT);
   arduino.pinMode(bluePin, Arduino.OUTPUT);
   
-  arduino.pinMode(buttonPin, Arduino.INPUT); 
+  arduino.pinMode(vibePin, Arduino.OUTPUT); 
   
   initialiseLightPattern();
 }
@@ -158,6 +155,8 @@ void readFromArduino() {
        startGame();
        bAllowPlayer1 = false;
        bAllowPlayer2 = false;
+       //Delay for a bit to get readings back to normal
+       delay(100);
        return;
      }
      else if (ball.isStationary()) {
@@ -252,7 +251,6 @@ void drawGameScreen() {
 void startGame() {
   bGameStarted = true;
   bGameOver = false;
-  ball.initialise();
 }
 
 void drawPlayers() {
@@ -277,10 +275,12 @@ void updateScore() {
   if (ball.result >= 0) {
     if (ball.result == 0) {
       players[1].score++;
+      scoreVibration();
       player2Goal();
     }
     else if (ball.result == 1) {
       players[0].score++;
+      scoreVibration();
       player1Goal();
     }
     ball.reset();
@@ -367,29 +367,6 @@ void calibrate() {
   player2RightAvg -= 100;
 }
 
-void readButton() {
-  lilypadButton = true;
-  for (int i = 0; i < 10; i++) {
-    if (arduino.digitalRead(buttonPin) == Arduino.LOW) {
-      //delay(10);
-      continue;
-    }
-    else {
-      lilypadButton = false;
-      break;
-    }
-  }
-  if (lilypadButton) {
-    println("pressed");
-  }
-  
-  
-  //if (arduino.digitalRead(buttonPin) == Arduino.LOW) {
-  //  println("pressed!");
-  //}
-}
-
-
 void initialiseLightPattern() {
   lightRGB(0, 255, 0);
   delay(200);
@@ -412,7 +389,7 @@ void player1Goal() {
   lightRGB(0, 0, 0);
   delay(200);
   lightRGB(252, 57, 144);
-  delay(500);
+  delay(200);
   lightRGB(0, 255, 0);
 }
 
@@ -426,8 +403,14 @@ void player2Goal() {
   lightRGB(0, 0, 0);
   delay(200);
   lightRGB(57, 142, 252);
-  delay(500);
+  delay(200);
   lightRGB(0, 255, 0);
+}
+
+void scoreVibration() {
+  arduino.analogWrite(vibePin, 255);
+  delay(1000);
+  arduino.analogWrite(vibePin, 0);
 }
 
 //Function to control LED with Firmata
