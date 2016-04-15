@@ -20,10 +20,9 @@ int redPin = 9;
 int greenPin = 10;
 int bluePin = 11;
 
-
 //Player controls
 int player1Left;
-int player1LeftAvg;
+int player1LeftAvg; //<>//
 int player1Right;
 int player1RightAvg;
 int player2Left;
@@ -69,7 +68,7 @@ void setup() {
   //Initialise our Arduino
   //There are problems with Firmata running at baud 115200 on the Lilypad
   //We've changed the bluetooth module to use 57600 instead! (Thanks Susana!)
-  arduino = new Arduino(this, Arduino.list()[2], 57600);
+  arduino = new Arduino(this, Arduino.list()[5], 57600);
   delay(500);
   
   //Setup the size
@@ -305,6 +304,9 @@ void keyPressed() {
     bGameOver = false;
     resetGame();
   }
+  if (key == 'w' || key == 'W') {
+    ball.initialise();
+  }
   
   //Keyboard controls for development, change to lilypad input later on
   //Player 0
@@ -380,31 +382,31 @@ void initialiseLightPattern() {
 }
 
 void player1Goal() {
-  lightRGB(252, 57, 144);
+  lightRGB(123, 67, 151);
   delay(200);
   lightRGB(0, 0, 0);
   delay(200);
-  lightRGB(252, 57, 144);
+  lightRGB(123, 67, 151);
   delay(200);
   lightRGB(0, 0, 0);
   delay(200);
-  lightRGB(252, 57, 144);
+  lightRGB(123, 67, 151);
   delay(200);
   lightRGB(0, 255, 0);
 }
 
 void player2Goal() {
-  lightRGB(57, 142, 252);
+  lightRGB(220, 36, 48);
   delay(200);
   lightRGB(0, 0, 0);
   delay(200);
-  lightRGB(57, 142, 252);
+  lightRGB(220, 36, 48);
   delay(200);
   lightRGB(0, 0, 0);
   delay(200);
-  lightRGB(57, 142, 252);
+  lightRGB(220, 36, 48);
   delay(200);
-  lightRGB(0, 255, 0);
+  lightRGB(220, 36, 48);
 }
 
 void scoreVibration() {
