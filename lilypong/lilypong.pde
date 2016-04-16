@@ -84,10 +84,12 @@ void setup() {
   subtitleFont = createFont("../assets/Sansita-Regular.otf", 32);
   
   //Create our players
+  //We need to offset the image to cater for shadows
   players[0] = new Player(-20, 2);
   players[1] = new Player(width-45, 0);
   
   //Calibrate the sensors
+  //Do this the first time to get the baseline value, when there is no pressure on the sensor
   calibrate();
   
   //Setup pin modes
@@ -97,19 +99,28 @@ void setup() {
   
   arduino.pinMode(vibePin, Arduino.OUTPUT); 
   
+  //Indicate to the users than the game is ready
   initialiseLightPattern();
 }
 
 void draw() {
+  //Draw the background
   imageMode(CORNER);
   image(imgBackground, 0, 0);
+  
+  //Read sensors from the Arduino
   readFromArduino();
+  
+  //Decide what to draw based on game state
+  //No game in progress - draw title screen
   if (!bGameStarted && !bGameOver) {
     drawTitleScreen();
   }
+  //if game is over - gameover screen
   else if (bGameOver) {
     drawGameOverScreen();
   }
+  //else we have a game in progress, let's update the screen
   else {
     readFromArduino();
     updateGame();
@@ -131,7 +142,7 @@ void drawTitleScreen () {
   text("Jump to Start!", 278, 368);
 }
 
-//Draw this screen when
+//Draw this screen when a game is over
 void drawGameOverScreen () {
   textFont(titleFont);
   fill(titleColor);
@@ -143,15 +154,16 @@ void drawGameOverScreen () {
 
 
 //Use this with Firmata
+//Reads values from the flex sensors
 void readFromArduino() {
   player1Left = arduino.analogRead(player1LeftPin);
-  delay(5);
+  delay(2);
   player1Right = arduino.analogRead(player1RightPin);
-  delay(5);
+  delay(2);
   player2Left = arduino.analogRead(player2LeftPin);
-  delay(5);
+  delay(2);
   player2Right = arduino.analogRead(player2RightPin);
-  delay(5);
+  delay(2);
     
   if ((player1Left < player1LeftAvg) || 
         (player1Right < player1RightAvg) ||
@@ -159,10 +171,11 @@ void readFromArduino() {
         (player2Right < player2RightAvg)) {
      if (!bGameStarted) {
        startGame();
+       ball.reset();
        bAllowPlayer1 = false;
        bAllowPlayer2 = false;
        //Delay for a bit to get readings back to normal
-       delay(100);
+       delay(50);
        return;
      }
      else if (ball.isStationary()) {
@@ -174,11 +187,14 @@ void readFromArduino() {
      }
      
   }
+  
+  //If we get here, a game in progress. Check the input and update player positions
   checkPlayer1Input();
   checkPlayer2Input();
   
 }
 
+//Check inputs for Player 1
 void checkPlayer1Input() {
   
   if (player1Left <= player1LeftAvg) {
@@ -198,6 +214,7 @@ void checkPlayer1Input() {
   bAllowPlayer1 = true;
 }
 
+//Check inputs for Player 2
 void checkPlayer2Input() {
   
   if (player2Left <= player2LeftAvg) {
@@ -217,6 +234,7 @@ void checkPlayer2Input() {
   bAllowPlayer2 = true;
 }
 
+//Update variables in the game before we draw anything
 void updateGame() {
   //Update player positions
   players[0].update();
@@ -233,6 +251,7 @@ void updateGame() {
   
 }
 
+//Draw the game screen
 void drawGameScreen() {
   stroke(255);
   noFill();
@@ -304,6 +323,7 @@ void updateScore() {
 void keyPressed() {
   if (key == 's' || key == 'S') {
     startGame();
+    ball.reset();
   }
   if (key == 'q' || key == 'Q') {
     bGameStarted = false;
@@ -481,7 +501,8 @@ class Ball {
   }
   
   void reset() {
-    position = new PVector(width/2, height/2);
+    position.x = width/2;
+    position.y = height/2;
     velocity.x = 0;
     velocity.y = 0;
     result = -1;
