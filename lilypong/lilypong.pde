@@ -16,9 +16,9 @@ int player1RightPin = 1;
 int player2LeftPin = 2;
 int player2RightPin = 3;
 
-int redPin = 9;
-int greenPin = 10;
-int bluePin = 11;
+int redPin = 11;
+int greenPin = 9;
+int bluePin = 10;
 
 //Player controls
 int player1Left;
@@ -118,6 +118,8 @@ void draw() {
 
 }
 
+//Draw game title screen
+//This happens when the game hasn't started yet
 void drawTitleScreen () {
   image(imgBall, 161, 90);
   textFont(titleFont);
@@ -129,6 +131,7 @@ void drawTitleScreen () {
   text("Jump to Start!", 278, 368);
 }
 
+//Draw this screen when
 void drawGameOverScreen () {
   textFont(titleFont);
   fill(titleColor);
@@ -142,10 +145,14 @@ void drawGameOverScreen () {
 //Use this with Firmata
 void readFromArduino() {
   player1Left = arduino.analogRead(player1LeftPin);
+  delay(5);
   player1Right = arduino.analogRead(player1RightPin);
+  delay(5);
   player2Left = arduino.analogRead(player2LeftPin);
+  delay(5);
   player2Right = arduino.analogRead(player2RightPin);
-  
+  delay(5);
+    
   if ((player1Left < player1LeftAvg) || 
         (player1Right < player1RightAvg) ||
         (player2Left < player2LeftAvg) ||
@@ -162,14 +169,13 @@ void readFromArduino() {
        ball.initialise();
        bAllowPlayer1 = false;
        bAllowPlayer2 = false;
+       delay(100);
        return;
-     }
-     else {
-       checkPlayer1Input();
-       checkPlayer2Input();
      }
      
   }
+  checkPlayer1Input();
+  checkPlayer2Input();
   
 }
 
@@ -406,7 +412,7 @@ void player2Goal() {
   delay(200);
   lightRGB(220, 36, 48);
   delay(200);
-  lightRGB(220, 36, 48);
+  lightRGB(0, 255, 0);
 }
 
 void scoreVibration() {
