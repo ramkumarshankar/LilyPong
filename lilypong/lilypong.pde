@@ -68,12 +68,11 @@ void setup() {
   //Initialise our Arduino
   //There are problems with Firmata running at baud 115200 on the Lilypad
   //We've changed the bluetooth module to use 57600 instead! (Thanks Susana!)
-  arduino = new Arduino(this, Arduino.list()[5], 57600);
+  arduino = new Arduino(this, Arduino.list()[1], 57600);
   delay(500);
   
   //Setup the size
   size(750, 468);
-  
   //Load the images we need
   imgBackground = loadImage("../assets/canvas.png");
   imgBall = loadImage("../assets/ball.png");
@@ -138,7 +137,7 @@ void drawTitleScreen () {
   text("LILYPONG", 100, 253);
   textFont(subtitleFont);
   fill(subtitleColor);
-  text("First to 7 points wins!", 238, 328);
+  text("First to 7 points wins", 238, 328);
   text("Jump to Start!", 278, 368);
 }
 
@@ -157,13 +156,13 @@ void drawGameOverScreen () {
 //Reads values from the flex sensors
 void readFromArduino() {
   player1Left = arduino.analogRead(player1LeftPin);
-  delay(2);
+  //delay(2);
   player1Right = arduino.analogRead(player1RightPin);
-  delay(2);
+  //delay(2);
   player2Left = arduino.analogRead(player2LeftPin);
-  delay(2);
+  //delay(2);
   player2Right = arduino.analogRead(player2RightPin);
-  delay(2);
+  //delay(2);
     
   if ((player1Left < player1LeftAvg) || 
         (player1Right < player1RightAvg) ||
@@ -219,12 +218,12 @@ void checkPlayer2Input() {
   
   if (player2Left <= player2LeftAvg) {
     if (bAllowPlayer2) {
-      players[1].setStep(-1);
+      players[1].setStep(1);
       bAllowPlayer2 = false;
     }
     return;
   }
-  if (player2Left <= player2RightAvg) {
+  if (player2Right <= player2RightAvg) {
     if (bAllowPlayer2) {
       players[1].setStep(-1);
       bAllowPlayer2 = false;
