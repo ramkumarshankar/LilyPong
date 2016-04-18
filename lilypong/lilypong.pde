@@ -68,7 +68,7 @@ void setup() {
   //Initialise our Arduino
   //There are problems with Firmata running at baud 115200 on the Lilypad
   //We've changed the bluetooth module to use 57600 instead! (Thanks Susana!)
-  arduino = new Arduino(this, Arduino.list()[1], 57600);
+
   delay(500);
   
   //Setup the size
@@ -121,7 +121,6 @@ void draw() {
   }
   //else we have a game in progress, let's update the screen
   else {
-    readFromArduino();
     updateGame();
     drawGameScreen();
   }
@@ -156,13 +155,9 @@ void drawGameOverScreen () {
 //Reads values from the flex sensors
 void readFromArduino() {
   player1Left = arduino.analogRead(player1LeftPin);
-  //delay(2);
   player1Right = arduino.analogRead(player1RightPin);
-  //delay(2);
   player2Left = arduino.analogRead(player2LeftPin);
-  //delay(2);
   player2Right = arduino.analogRead(player2RightPin);
-  //delay(2);
     
   if ((player1Left < player1LeftAvg) || 
         (player1Right < player1RightAvg) ||
@@ -379,10 +374,13 @@ void calibrate() {
   player2RightAvg = 0;
   for (int i = 0; i < 10; i++) {
     player1LeftAvg += arduino.analogRead(player1LeftPin);
+    delay(20);
     player1RightAvg += arduino.analogRead(player1RightPin);
+    delay(20);
     player2LeftAvg += arduino.analogRead(player2LeftPin);
+    delay(20);
     player2RightAvg += arduino.analogRead(player2RightPin);
-    delay(50);
+    delay(20);
   }
   player1LeftAvg /= 10;
   player1LeftAvg -= 100;
