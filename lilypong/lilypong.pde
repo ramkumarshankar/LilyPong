@@ -68,7 +68,7 @@ void setup() {
   //Initialise our Arduino
   //There are problems with Firmata running at baud 115200 on the Lilypad
   //We've changed the bluetooth module to use 57600 instead! (Thanks Susana!)
-
+  arduino = new Arduino(this, Arduino.list()[1], 57600);
   delay(500);
   
   //Setup the size
